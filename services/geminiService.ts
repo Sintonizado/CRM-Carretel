@@ -5,14 +5,16 @@ import { Opportunity } from "../types";
 const GeminiService = {
   getFunnelInsights: async (opportunities: Opportunity[]): Promise<string> => {
     try {
-      // Create instance right before making the call
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+      // Use standard initialization with process.env.API_KEY
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       
       const summary = opportunities.map(o => ({
         fase: o.phase,
-        valor: o.opportunityValue,
+        // Fix: Changed opportunityValue to opportunity_value to match Opportunity interface
+        valor: o.opportunity_value,
         consultor: o.consultant,
-        proposta: o.proposalSent
+        // Fix: Changed proposalSent to proposal_sent to match Opportunity interface
+        proposta: o.proposal_sent
       }));
 
       const response = await ai.models.generateContent({
@@ -25,6 +27,7 @@ const GeminiService = {
         Responda em Português do Brasil com tom profissional.`,
       });
 
+      // Use .text property directly as per guidelines
       return response.text || "Não foi possível gerar insights no momento.";
     } catch (error) {
       console.error("Gemini Error:", error);

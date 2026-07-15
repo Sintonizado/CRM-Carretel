@@ -9,19 +9,21 @@ export enum FunnelPhase {
 
 export interface Contact {
   id: string;
+  user_id?: string;
   name: string;
   email: string;
   phone: string;
   city: string;
   uf: string;
   position: string;
-  registrationDate: string;
+  registration_date: string;
 }
 
 export interface Opportunity {
   id: string;
-  contactId: string;
-  visitDate: string;
+  user_id?: string;
+  contact_id: string;
+  visit_date: string;
   city: string;
   uf: string;
   responsible: string;
@@ -29,11 +31,25 @@ export interface Opportunity {
   consultant: string;
   phase: FunnelPhase;
   notes: string;
-  opportunityValue: number;
-  lastMeetingDate: string;
-  proposalSent: boolean;
-  closingDate?: string;
-  closedValue?: number;
+  opportunity_value: number;
+  last_meeting_date: string;
+  proposal_sent: boolean;
+  closing_date?: string;
+  closed_value?: number;
+}
+
+export interface Municipality {
+  uf: string;
+  ente: string;
+  ibge: string;
+  receitaEstimada: number;
+  populacao: number;
+  vaaf: number;
+  vaat: number;
+  vaar: number;
+  complementacaoUniao: number;
+  totalReceitas: number;
+  porte: string;
 }
 
 export type ViewType = 'dashboard' | 'contacts' | 'opportunities' | 'calendar';

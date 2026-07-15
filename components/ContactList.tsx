@@ -6,12 +6,13 @@ import { Pencil, Trash2, X } from 'lucide-react';
 
 interface ContactListProps {
   contacts: Contact[];
+  searchTerm: string;
   onAddContact: (contact: Contact) => void;
   onUpdateContact: (contact: Contact) => void;
   onDeleteContact: (id: string) => void;
 }
 
-const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpdateContact, onDeleteContact }) => {
+const ContactList: React.FC<ContactListProps> = ({ contacts, searchTerm, onAddContact, onUpdateContact, onDeleteContact }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [formData, setFormData] = useState<Partial<Contact>>({
@@ -21,7 +22,7 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpd
     city: '',
     uf: 'SP',
     position: '',
-    registrationDate: new Date().toISOString().split('T')[0]
+    registration_date: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
@@ -36,21 +37,17 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpd
         city: '',
         uf: 'SP',
         position: '',
-        registrationDate: new Date().toISOString().split('T')[0]
+        registration_date: new Date().toISOString().split('T')[0]
       });
     }
   }, [editingContact]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingContact) {
-      onUpdateContact({ ...editingContact, ...formData } as Contact);
+      await onUpdateContact({ ...editingContact, ...formData } as Contact);
     } else {
-      const newContact: Contact = {
-        ...formData as Contact,
-        id: Math.random().toString(36).substr(2, 9)
-      };
-      onAddContact(newContact);
+      await onAddContact(formData as Contact);
     }
     closeModal();
   };
@@ -60,14 +57,15 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpd
     setEditingContact(null);
   };
 
-  const handleDeleteFromModal = () => {
-    if (editingContact) {
-      if (window.confirm(`Tem certeza que deseja excluir "${editingContact.name}"? Todas as oportunidades vinculadas também serão removidas.`)) {
-        onDeleteContact(editingContact.id);
-        closeModal();
-      }
-    }
-  };
+  const filteredContacts = contacts.filter(contact => {
+    const search = searchTerm.toLowerCase();
+    return (
+      contact.name.toLowerCase().includes(search) ||
+      contact.email.toLowerCase().includes(search) ||
+      contact.position.toLowerCase().includes(search) ||
+      contact.city.toLowerCase().includes(search)
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -97,14 +95,14 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpd
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {contacts.length === 0 ? (
+              {filteredContacts.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-gray-400 italic">
                     Nenhum contato cadastrado.
                   </td>
                 </tr>
               ) : (
-                contacts.map((contact) => (
+                filteredContacts.map((contact) => (
                   <tr key={contact.id} className="hover:bg-gray-50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -121,9 +119,14 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpd
                         <button 
                           onClick={() => setEditingContact(contact)}
                           className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                          title="Editar"
                         >
                           <Pencil size={18} />
+                        </button>
+                        <button 
+                          onClick={() => { if(confirm('Excluir contato?')) onDeleteContact(contact.id)}}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
@@ -213,17 +216,6 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpd
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-gray-50 mt-4">
-                  {editingContact && (
-                    <button 
-                      type="button" 
-                      onClick={handleDeleteFromModal}
-                      className="px-4 py-3 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors flex items-center justify-center"
-                      title="Excluir Contato"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  )}
-                  
                   <button 
                     type="button" 
                     onClick={closeModal}
@@ -231,7 +223,6 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, onAddContact, onUpd
                   >
                     Cancelar
                   </button>
-                  
                   <button 
                     type="submit" 
                     className="flex-[2] py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"

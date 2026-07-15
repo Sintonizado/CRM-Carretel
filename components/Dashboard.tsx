@@ -3,7 +3,6 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Opportunity, Contact, FunnelPhase } from '../types';
 import { ICONS } from '../constants';
-import GeminiService from '../services/geminiService';
 
 interface DashboardProps {
   opportunities: Opportunity[];
@@ -13,42 +12,24 @@ interface DashboardProps {
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#10b981'];
 
 const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
-  const [insights, setInsights] = React.useState<string>("");
-  const [loadingAI, setLoadingAI] = React.useState(false);
-
-  // Group by Stage
   const stageData = Object.values(FunnelPhase).map((phase, idx) => {
     const oppsInPhase = opportunities.filter(o => o.phase === phase);
     return {
       name: phase,
       count: oppsInPhase.length,
-      value: oppsInPhase.reduce((acc, curr) => acc + (curr.closedValue || curr.opportunityValue), 0),
+      value: oppsInPhase.reduce((acc, curr) => acc + (curr.closed_value || curr.opportunity_value || 0), 0),
       color: COLORS[idx % COLORS.length]
     };
   });
 
-  // Calculate stats
   const totalOpps = opportunities.length;
-  const totalValue = opportunities.reduce((acc, curr) => acc + (curr.closedValue || curr.opportunityValue), 0);
+  const totalValue = opportunities.reduce((acc, curr) => acc + (curr.closed_value || curr.opportunity_value || 0), 0);
   const conversionRate = totalOpps > 0 
     ? (opportunities.filter(o => o.phase === FunnelPhase.FECHADO).length / totalOpps * 100).toFixed(1)
     : 0;
 
-  const handleGetInsights = async () => {
-    setLoadingAI(true);
-    try {
-      const summary = await GeminiService.getFunnelInsights(opportunities);
-      setInsights(summary);
-    } catch (err) {
-      setInsights("Erro ao gerar insights automáticos.");
-    } finally {
-      setLoadingAI(false);
-    }
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Oportunidades', value: totalOpps, icon: <ICONS.TrendingUp />, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -56,7 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
           { label: 'Taxa de Conversão', value: `${conversionRate}%`, icon: <ICONS.TrendingUp />, color: 'text-purple-600', bg: 'bg-purple-50' },
           { label: 'Contatos Base', value: contacts.length, icon: <ICONS.TrendingUp />, color: 'text-amber-600', bg: 'bg-amber-50' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+          <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all hover:shadow-md">
             <div>
               <p className="text-sm font-medium text-gray-500">{stat.label}</p>
               <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
@@ -68,9 +49,7 @@ const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
         ))}
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Funnel Bar Chart */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6 text-gray-800">Valor por Etapa do Funil</h3>
           <div className="h-80">
@@ -93,7 +72,6 @@ const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
           </div>
         </div>
 
-        {/* Quantity Pie Chart */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6 text-gray-800">Distribuição de Oportunidades</h3>
           <div className="h-80">
@@ -122,33 +100,43 @@ const Dashboard: React.FC<DashboardProps> = ({ opportunities, contacts }) => {
         </div>
       </div>
 
-      {/* AI Insights Section */}
-      <div className="bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
-        <div className="relative z-10 max-w-2xl">
-          <h3 className="text-2xl font-bold mb-4">Insights de IA Carretel</h3>
-          <p className="text-indigo-200 mb-6 leading-relaxed">
-            Nossa IA analisa seu pipeline comercial para sugerir ações imediatas e prever gargalos no fechamento.
-          </p>
-          <button 
-            onClick={handleGetInsights}
-            disabled={loadingAI}
-            className="px-6 py-3 bg-white text-indigo-900 font-semibold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg disabled:opacity-50"
-          >
-            {loadingAI ? 'Analisando dados...' : 'Gerar Relatório Estratégico'}
-          </button>
-
-          {insights && (
-            <div className="mt-8 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 animate-in slide-in-from-bottom-4 duration-500">
-              <div className="whitespace-pre-wrap text-indigo-50 leading-relaxed font-light">
-                {insights}
-              </div>
-            </div>
-          )}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold mb-6 text-gray-800">Oportunidades Recentes</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-200 text-sm text-gray-500">
+                <th className="pb-3 font-medium px-4">Cidade / UF</th>
+                <th className="pb-3 font-medium px-4">Consultor</th>
+                <th className="pb-3 font-medium px-4">Fase</th>
+                <th className="pb-3 font-medium px-4 text-right">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {opportunities.slice(0, 5).map((opp) => (
+                <tr key={opp.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                  <td className="py-4 px-4 text-sm text-gray-800 font-medium">{opp.city} - {opp.uf}</td>
+                  <td className="py-4 px-4 text-sm text-gray-600">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      {opp.consultant || 'Não definido'}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 text-sm text-gray-600">{opp.phase}</td>
+                  <td className="py-4 px-4 text-sm text-gray-800 font-medium text-right">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opp.opportunity_value || 0)}
+                  </td>
+                </tr>
+              ))}
+              {opportunities.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-gray-500 text-sm">
+                    Nenhuma oportunidade encontrada.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-        
-        {/* Abstract Background Design */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl"></div>
       </div>
     </div>
   );

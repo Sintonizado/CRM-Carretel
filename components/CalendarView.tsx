@@ -4,9 +4,10 @@ import { Opportunity } from '../types';
 
 interface CalendarViewProps {
   opportunities: Opportunity[];
+  onSelectOpportunity: (id: string) => void;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({ opportunities }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ opportunities, onSelectOpportunity }) => {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -24,7 +25,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ opportunities }) => {
 
   const getDayActivities = (day: number) => {
     const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return opportunities.filter(o => o.visitDate === dayStr || o.lastMeetingDate === dayStr);
+    return opportunities.filter(o => o.visit_date === dayStr || o.last_meeting_date === dayStr);
   };
 
   return (
@@ -60,15 +61,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({ opportunities }) => {
                 <span className={`text-sm font-medium ${day === now.getDate() ? 'bg-indigo-600 text-white w-7 h-7 flex items-center justify-center rounded-full' : 'text-gray-400'}`}>
                   {day}
                 </span>
-                <div className="mt-2 space-y-1 overflow-y-auto max-h-[80px]">
+                <div className="mt-2 space-y-1 overflow-y-auto max-h-[100px]">
                   {activities.map(act => (
-                    <div 
+                    <button 
                       key={act.id} 
-                      className="text-[10px] p-1 px-2 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 truncate cursor-pointer hover:bg-indigo-100 transition-colors"
-                      title={act.notes}
+                      onClick={() => onSelectOpportunity(act.id)}
+                      className="w-full text-left p-1 px-2 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors block"
+                      title={`${act.city} - ${act.consultant} - ${act.phase}`}
                     >
-                      {act.consultant} - {act.phase}
-                    </div>
+                      <div className="font-bold text-[10px] truncate">{act.city}</div>
+                      <div className="text-[9px] truncate opacity-90">{act.consultant.split(' ')[0]} - {act.phase}</div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -80,21 +83,26 @@ const CalendarView: React.FC<CalendarViewProps> = ({ opportunities }) => {
       <div className="bg-white p-6 rounded-2xl border border-gray-100">
         <h4 className="font-bold text-gray-800 mb-4">Próximos Compromissos</h4>
         <div className="space-y-4">
-          {opportunities.filter(o => new Date(o.visitDate) >= new Date()).slice(0, 3).map(opp => (
-            <div key={opp.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <div className="w-12 h-12 rounded-lg bg-indigo-600 text-white flex flex-col items-center justify-center text-xs">
-                <span className="font-bold">{opp.visitDate.split('-')[2]}</span>
-                <span className="opacity-75">{monthNames[parseInt(opp.visitDate.split('-')[1])-1].substring(0,3)}</span>
+          {opportunities.filter(o => new Date(o.visit_date) >= new Date()).slice(0, 3).map(opp => (
+            <div key={opp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-indigo-600 text-white flex flex-col items-center justify-center text-xs">
+                  <span className="font-bold">{opp.visit_date.split('-')[2]}</span>
+                  <span className="opacity-75">{monthNames[parseInt(opp.visit_date.split('-')[1])-1].substring(0,3)}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Visita em {opp.city}</p>
+                  <p className="text-xs text-gray-500">Consultor: {opp.consultant}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900">Visita em {opp.city}</p>
-                <p className="text-xs text-gray-500">Consultor: {opp.consultant}</p>
-              </div>
+              <button 
+                onClick={() => onSelectOpportunity(opp.id)}
+                className="text-indigo-600 font-bold text-xs hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                Abrir Oportunidade
+              </button>
             </div>
           ))}
-          {opportunities.filter(o => new Date(o.visitDate) >= new Date()).length === 0 && (
-            <p className="text-sm text-gray-500 italic">Nenhuma atividade futura registrada.</p>
-          )}
         </div>
       </div>
     </div>
