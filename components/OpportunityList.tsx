@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Opportunity, Contact, FunnelPhase } from '../types';
 import { ICONS, BRAZIL_STATES } from '../constants';
 import { Trash2, Pencil, X, Eye, MapPin } from 'lucide-react';
+import { CityAutocomplete } from './CityAutocomplete';
 
 interface OpportunityListProps {
   opportunities: Opportunity[];
@@ -127,6 +128,17 @@ const OpportunityList: React.FC<OpportunityListProps> = ({
     );
   });
 
+  const getPhaseColor = (phase: FunnelPhase) => {
+    switch (phase) {
+      case FunnelPhase.PROSPECCAO: return 'bg-blue-100 text-blue-700';
+      case FunnelPhase.NEGOCIACAO: return 'bg-yellow-100 text-yellow-800';
+      case FunnelPhase.PROPOSTA: return 'bg-purple-100 text-purple-700';
+      case FunnelPhase.FECHADO: return 'bg-green-100 text-green-700';
+      case FunnelPhase.PERDIDO: return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -152,11 +164,7 @@ const OpportunityList: React.FC<OpportunityListProps> = ({
           filteredOpps.map((opp) => (
             <div key={opp.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group">
               <div className="flex justify-between items-start mb-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                  opp.phase === FunnelPhase.FECHADO ? 'bg-green-100 text-green-700' :
-                  opp.phase === FunnelPhase.PERDIDO ? 'bg-red-100 text-red-700' :
-                  'bg-indigo-100 text-indigo-700'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getPhaseColor(opp.phase)}`}>
                   {opp.phase}
                 </span>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -224,8 +232,14 @@ const OpportunityList: React.FC<OpportunityListProps> = ({
                         <input type="email" placeholder="Email" className="w-full px-3 py-2 border rounded-lg text-sm" value={newContactForm.email} onChange={e => setNewContactForm({...newContactForm, email: e.target.value})} />
                         <input type="text" placeholder="Telefone" className="w-full px-3 py-2 border rounded-lg text-sm" value={newContactForm.phone} onChange={e => setNewContactForm({...newContactForm, phone: e.target.value})} />
                         <div className="flex gap-2">
-                           <input type="text" placeholder="Cidade" className="w-full px-3 py-2 border rounded-lg text-sm" value={newContactForm.city} onChange={e => setNewContactForm({...newContactForm, city: e.target.value})} />
-                           <input type="text" placeholder="UF" className="w-16 px-3 py-2 border rounded-lg text-sm" value={newContactForm.uf} onChange={e => setNewContactForm({...newContactForm, uf: e.target.value})} />
+                           <CityAutocomplete 
+                             className="w-full"
+                             inputClassName="px-3 py-2 rounded-lg border-gray-200 text-sm"
+                             placeholder="Buscar cidade..."
+                             value={newContactForm.city || ''}
+                             uf={newContactForm.uf || ''}
+                             onChange={(city, uf) => setNewContactForm({...newContactForm, city, uf})}
+                           />
                         </div>
                         <button type="button" onClick={handleCreateContact} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
                           Salvar Contato
@@ -251,24 +265,13 @@ const OpportunityList: React.FC<OpportunityListProps> = ({
                       </select>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Cidade</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
-                      value={formData.city}
-                      onChange={e => setFormData({...formData, city: e.target.value})}
+                  <div className="space-y-2 md:col-span-1">
+                    <label className="text-sm font-semibold text-gray-700">Cidade / UF</label>
+                    <CityAutocomplete 
+                      value={formData.city || ''}
+                      uf={formData.uf || ''}
+                      onChange={(city, uf) => setFormData({...formData, city, uf})}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">UF</label>
-                    <select 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-500"
-                      value={formData.uf}
-                      onChange={e => setFormData({...formData, uf: e.target.value})}
-                    >
-                      {BRAZIL_STATES.map(st => <option key={st} value={st}>{st}</option>)}
-                    </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">Consultor</label>

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Contact } from '../types';
 import { ICONS, BRAZIL_STATES } from '../constants';
 import { Pencil, Trash2, X } from 'lucide-react';
+import { CityAutocomplete } from './CityAutocomplete';
 
 interface ContactListProps {
   contacts: Contact[];
@@ -193,25 +194,13 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, searchTerm, onAddCo
                       onChange={e => setFormData({...formData, position: e.target.value})}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">Cidade</label>
-                    <input 
-                      required
-                      type="text" 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.city}
-                      onChange={e => setFormData({...formData, city: e.target.value})}
+                  <div className="space-y-2 md:col-span-1">
+                    <label className="text-sm font-semibold text-gray-700">Cidade / UF</label>
+                    <CityAutocomplete 
+                      value={formData.city || ''}
+                      uf={formData.uf || ''}
+                      onChange={(city, uf) => setFormData({...formData, city, uf})}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700">UF</label>
-                    <select 
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                      value={formData.uf}
-                      onChange={e => setFormData({...formData, uf: e.target.value})}
-                    >
-                      {BRAZIL_STATES.map(st => <option key={st} value={st}>{st}</option>)}
-                    </select>
                   </div>
                 </div>
 
